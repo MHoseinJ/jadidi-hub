@@ -9,6 +9,7 @@ from src import git
 from src import osinfo
 from src import project
 from src import sol2
+from src import status
 
 
 def cmd_os(args):
@@ -41,6 +42,10 @@ def cmd_check_deps(args):
 def cmd_doctor(args):
     return checks.cmd_doctor()
 
+
+def cmd_status(args):
+    return status.cmd_status()
+    
 
 def cmd_install_deps(args):
     distro = osinfo.detect_distro()
@@ -128,6 +133,12 @@ def build_parser():
         help="Check dependencies and engine state",
     )
     p.set_defaults(func=cmd_doctor)
+
+    p = subparsers.add_parser(
+        "status",
+        help="Show current hub status",
+    )
+    p.set_defaults(func=cmd_status)
 
     p = subparsers.add_parser(
         "install-deps",
