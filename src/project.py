@@ -1,0 +1,197 @@
+import json
+import shutil
+import stat
+import struct
+from pathlib import Path
+
+from src import engine
+from src import paths
+
+PROJECT_DIRS = [
+    "Fonts",
+    "Scenes",
+    "Scripts",
+]
+
+SYSTEM_FONT_CANDIDATES = [
+    "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+    "/usr/share/fonts/TTF/DejaVuSans.ttf",
+    "/usr/share/fonts/dejavu/DejaVuSans.ttf",
+    "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",
+    "/usr/share/fonts/liberation/LiberationSans-Regular.ttf",
+]
+
+
+def assets_dir():
+    return paths.BASE_DIR / "assets"
+
+
+def local_icon():
+    return assets_dir() / "icon.bmp"
+
+
+def local_font():
+    return assets_dir() / "font.ttf"
+
+
+def make_bmp():
+    file_size = 58
+    offset = 54
+
+    header = struct.pack("<2sIHHI", b"BM", file_size, 0, 0, offset)
+    info = struct.pack(
+        "<IiiHHIIiiII",
+        40,
+        1,
+        1,
+        1,
+        24,
+        0,
+        4,
+        2835,
+        2835,
+        0,
+        0,
+    )
+    pixel = b"\x00\x00\xff\x00"
+
+    return header + info + pixel
+
+
+def find_binary(version=None):
+    builds_dir = paths.BUILDS_DIR
+
+    if version:
+        version = engine.safe_name(version)
+        binary = builds_dir / version / "jadidi"
+
+        if binary.exists():
+            return binary
+
+        raise RuntimeError(f"Engine binary not found: {binary}")
+
+    try:
+        current_version = engine.get_version_name()
+        binary = builds_dir / current_version / "jadidi"
+
+        if binary.exists():
+            return binary
+    except Exception:
+        pass
+
+    if builds_dir.exists():
+        candidates = sorted(
+            builds_dir.iterdir(),
+            key=lambda path: path.stat().st_mtime,
+            reverse=True,
+        )
+
+        for candidate in candidates:
+            binary = candidate / "jadidi"
+
+            if binary.exists():
+                return binary
+
+    raise RuntimeError(
+        "Engine binary not found. Run: python main.py engine-build"
+    )
+
+
+def write_config(project_root):
+    config_path = project_root / "config.json"
+
+    if config_path.exists():
+        return
+
+    config = {
+        "window": {
+            "fullscreen": False,
+            "height": 720,
+            "icon": "icon.bmp",
+            "renderer": "sdl",
+            "title": project_root.name,
+            "width": 1280,
+        }
+    }
+
+    config_path.write_text(json.dumps(config, indent=4) + "\n")
+
+
+def write_home_scene(project_root):
+    home_path = project_root / "Scenes" / "home.json"
+
+    if home_path.exists():
+        return
+
+    home_path.write_text('{ "objects": [] }\n')
+
+
+def copy_icon(project_root):
+    icon_path = project_root / "icon.bmp"
+
+    if icon_path.exists():
+        return
+
+    if local_icon().exists():
+        shutil.copy2(local_icon(), icon_path)
+        return
+
+    icon_path.write_bytes(make_bmp())
+
+
+def copy_font(project_root):
+    font_path = project_root / "Fonts" / "font.ttf"
+
+    if font_path.exists():
+        return
+
+    if local_font().exists():
+        shutil.copy2(local_font(), font_path)
+        return
+
+    for candidate in SYSTEM_FONT_CANDIDATES:
+        candidate_path = Path(candidate)
+
+        if candidate_path.exists():
+            shutil.copy2(candidate_path, font_path)
+            return
+
+    font_path.write_bytes(b"")
+    print(f"Warning: created empty {font_path}. Replace it with a real TTF font.")
+
+
+def create_project(path, version=None):
+    project_root = Path(path).expanduser().resolve()
+
+    if project_root.exists() and project_root.is_file():
+        raise RuntimeError(f"{project_root} is a file")
+
+    if project_root.exists() and any(project_root.iterdir()):
+        raise RuntimeError(f"{project_root} is not empty")
+
+    project_root.mkdir(parents=True, exist_ok=True)
+
+    for directory in PROJECT_DIRS:
+        (project_root / directory).mkdir(parents=True, exist_ok=True)
+
+    write_config(project_root)
+    write_home_scene(project_root)
+    copy_icon(project_root)
+    copy_font(project_root)
+
+    binary_src = find_binary(version)
+    binary_dst = project_root / "jadidi"
+
+    shutil.copy2(binary_src, binary_dst)
+    binary_dst.chmod(
+        binary_dst.stat().st_mode
+        | stat.S_IXUSR
+        | stat.S_IXGRP
+        | stat.S_IXOTH
+    )
+
+    print(f"Project created: {project_root}")
+    print(f"Engine binary: {binary_dst}")
+    print(f"Binary source: {binary_src}")
+
+    return 0

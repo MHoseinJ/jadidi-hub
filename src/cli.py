@@ -6,6 +6,7 @@ from src import deps
 from src import engine
 from src import git
 from src import osinfo
+from src import project
 from src import sol2
 
 USAGE = """Usage: python main.py <command> [options]
@@ -24,6 +25,7 @@ Commands:
   clone <url> <path>            Clone a repository
   current-tag <path>            Show latest tag
   tag <path> <tag>              Create a tag
+  project-new <path> [version]  Create a minimal runnable project
 """
 
 
@@ -190,6 +192,20 @@ def parse_args(args, arg_count):
             return 0
         except subprocess.CalledProcessError as exc:
             print(f"git tag failed: {exc}", file=sys.stderr)
+            return 1
+
+    if command == "project-new":
+        if arg_count < 3 or arg_count > 4:
+            print("Usage: python main.py project-new <path> [version]")
+            return 1
+
+        path = args[1]
+        version = args[2] if arg_count == 4 else None
+
+        try:
+            return project.create_project(path, version)
+        except RuntimeError as exc:
+            print(f"project creation failed: {exc}", file=sys.stderr)
             return 1
 
     print(f"Unknown command: {command}")
