@@ -1,12 +1,17 @@
 import subprocess
 import sys
 
+from src import deps
 from src import git
+from src import osinfo
 
 USAGE = """Usage: python main.py <command> [options]
 
 Commands:
   help                          Show this help
+  os                            Show detected OS
+  deps                          Show dependencies for current OS
+  install-deps                  Install dependencies for current OS
   clone <url> <path>            Clone a repository
   current-tag <path>            Show latest tag
   tag <path> <tag>              Create a tag
@@ -16,6 +21,7 @@ Commands:
 def get_args():
     arg_count = len(sys.argv)
     args = sys.argv[1:]
+
     return args, arg_count
 
 
@@ -29,6 +35,31 @@ def parse_args(args, arg_count):
     if command in ("help", "--help", "-h"):
         print(USAGE)
         return 0
+
+    if command == "os":
+        print(osinfo.distro_name())
+        print(osinfo.detect_distro())
+        return 0
+
+    if command == "deps":
+        distro = osinfo.detect_distro()
+        packages = deps.get_dependencies(distro)
+
+        if not packages:
+            print(f"Unsupported distro: {distro}", file=sys.stderr)
+            return 1
+
+        print(f"Distro: {distro}")
+        print("Dependencies:")
+
+        for package in packages:
+            print(f"  {package}")
+
+        return 0
+
+    if command == "install-deps":
+        distro = osinfo.detect_distro()
+        return deps.install_dependencies(distro)
 
     if command == "clone":
         if arg_count != 4:
@@ -72,4 +103,5 @@ def parse_args(args, arg_count):
 
     print(f"Unknown command: {command}")
     print(USAGE)
+
     return 1
