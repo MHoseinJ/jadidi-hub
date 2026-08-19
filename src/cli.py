@@ -1,6 +1,7 @@
 import subprocess
 import sys
 
+from src import checks
 from src import deps
 from src import engine
 from src import git
@@ -13,6 +14,8 @@ Commands:
   help                          Show this help
   os                            Show detected OS
   deps                          Show dependencies for current OS
+  check-deps                    Check required dependencies
+  doctor                        Check dependencies and engine state
   install-deps                  Install dependencies for current OS
   install-sol2 [tag]            Install sol2 into ~/.jadidi
   engine-sync [repo-url]        Clone or update engine source
@@ -62,6 +65,20 @@ def parse_args(args, arg_count):
             print(f"  {package}")
 
         return 0
+
+    if command == "check-deps":
+        if arg_count != 2:
+            print("Usage: python main.py check-deps")
+            return 1
+
+        return checks.cmd_check_deps()
+
+    if command == "doctor":
+        if arg_count != 2:
+            print("Usage: python main.py doctor")
+            return 1
+
+        return checks.cmd_doctor()
 
     if command == "install-deps":
         distro = osinfo.detect_distro()
