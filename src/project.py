@@ -2,10 +2,12 @@ import json
 import shutil
 import stat
 import struct
+import subprocess
 from pathlib import Path
 
 from src import engine
 from src import paths
+
 
 PROJECT_DIRS = [
     "Fonts",
@@ -199,6 +201,26 @@ def copy_font(project_root):
     print(f"Warning: created empty {font_path}. Replace it with a real TTF font.")
 
 
+def write_gitignore(project_root):
+    gitignore_path = project_root / ".gitignore"
+
+    if gitignore_path.exists():
+        return
+
+    gitignore_path.write_text("jadidi\n")
+
+
+def run_git_init(project_root):
+    if not shutil.which("git"):
+        raise RuntimeError("git is not installed")
+
+    subprocess.run(
+        ["git", "init"],
+        cwd=project_root,
+        check=True,
+    )
+    
+
 def copy_ide_autocompletion(project_root, ide_dir):
     target = project_root / ide_dir.name
 
@@ -213,7 +235,7 @@ def copy_ide_autocompletion(project_root, ide_dir):
     return target
 
 
-def create_project(path, version=None):
+def create_project(path, version=None, git_init=False):
     project_root = Path(path).expanduser().resolve()
 
     if project_root.exists() and project_root.is_file():
@@ -256,5 +278,10 @@ def create_project(path, version=None):
     print(f"Engine binary: {binary_dst}")
     print(f"Binary source: {binary_src}")
     print(f"IDE autocompletion: {ide_target}")
+
+    if git_init:
+        write_gitignore(project_root)
+        run_git_init(project_root)
+        print(f"Git repository initialized: {project_root / '.git'}")
 
     return 0

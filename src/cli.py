@@ -77,7 +77,7 @@ def cmd_engine_build(args):
 
 
 def cmd_project_new(args):
-    return project.create_project(args.path, args.version)
+    return project.create_project(args.path, args.version, args.git_init)
 
 
 def cmd_clone(args):
@@ -196,6 +196,11 @@ def build_parser():
         "version",
         nargs="?",
         help="Engine build version/tag",
+    )
+    p.add_argument(
+        "--git-init",
+        action="store_true",
+        help="Run git init in project directory",
     )
     p.set_defaults(func=cmd_project_new)
 
