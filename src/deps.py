@@ -88,6 +88,6 @@ def install_dependencies(distro):
         return 1
 
     print("Dependencies installed.")
-    print("Note: sol2 is not handled by system package installation yet.")
+    print("Note: run install-sol2 to install sol2 into ~/.jadidi.")
 
     return 0

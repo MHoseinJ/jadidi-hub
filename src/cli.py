@@ -4,6 +4,7 @@ import sys
 from src import deps
 from src import git
 from src import osinfo
+from src import sol2
 
 USAGE = """Usage: python main.py <command> [options]
 
@@ -12,6 +13,7 @@ Commands:
   os                            Show detected OS
   deps                          Show dependencies for current OS
   install-deps                  Install dependencies for current OS
+  install-sol2 [tag]            Install sol2 into ~/.jadidi
   clone <url> <path>            Clone a repository
   current-tag <path>            Show latest tag
   tag <path> <tag>              Create a tag
@@ -60,6 +62,22 @@ def parse_args(args, arg_count):
     if command == "install-deps":
         distro = osinfo.detect_distro()
         return deps.install_dependencies(distro)
+
+    if command == "install-sol2":
+        if arg_count > 3:
+            print("Usage: python main.py install-sol2 [tag]")
+            return 1
+
+        tag = args[1] if arg_count >= 3 else None
+
+        try:
+            return sol2.install_sol2(tag)
+        except subprocess.CalledProcessError as exc:
+            print(f"sol2 installation failed: {exc}", file=sys.stderr)
+            return 1
+        except RuntimeError as exc:
+            print(f"sol2 installation failed: {exc}", file=sys.stderr)
+            return 1
 
     if command == "clone":
         if arg_count != 4:
