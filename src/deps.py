@@ -65,7 +65,10 @@ def install_dependencies(distro):
     packages = get_dependencies(distro)
 
     if not packages:
-        print(f"Unsupported distro: {distro}", file=sys.stderr)
+        from src import osinfo
+        real_id = osinfo.distro_id()
+        print(f"Unsupported distro: {real_id} (resolved as '{distro}')", file=sys.stderr)
+        print("Supported families: debian, fedora, arch", file=sys.stderr)
         return 1
 
     try:

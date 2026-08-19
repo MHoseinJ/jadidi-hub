@@ -1,5 +1,29 @@
 from pathlib import Path
 
+FAMILY_MAP = {
+    "debian": "debian",
+    "ubuntu": "debian",
+    "linuxmint": "debian",
+    "pop": "debian",
+    "elementary": "debian",
+    "zorin": "debian",
+    "kali": "debian",
+    "raspbian": "debian",
+    "fedora": "fedora",
+    "nobara": "fedora",
+    "centos": "fedora",
+    "rhel": "fedora",
+    "rocky": "fedora",
+    "alma": "fedora",
+    "amzn": "fedora",
+    "arch": "arch",
+    "manjaro": "arch",
+    "endeavouros": "arch",
+    "cachyos": "arch",
+    "garuda": "arch",
+    "artix": "arch",
+}
+
 
 def read_os_release():
     path = Path("/etc/os-release")
@@ -20,23 +44,40 @@ def read_os_release():
     return values
 
 
+def _resolve_family(dist_id):
+    dist_id = dist_id.lower()
+
+    if dist_id in FAMILY_MAP:
+        return FAMILY_MAP[dist_id]
+
+    return None
+
+
 def detect_distro():
     release = read_os_release()
 
-    ids = [release.get("ID", "").lower()]
-    ids += release.get("ID_LIKE", "").lower().split()
+    candidates = []
 
-    if "debian" in ids or "ubuntu" in ids:
-        return "debian"
+    main_id = release.get("ID", "")
+    if main_id:
+        candidates.append(main_id)
 
-    if "fedora" in ids:
-        return "fedora"
+    id_like = release.get("ID_LIKE", "")
+    if id_like:
+        candidates.extend(id_like.lower().split())
 
-    if "arch" in ids:
-        return "arch"
+    for candidate in candidates:
+        family = _resolve_family(candidate)
+        if family:
+            return family
 
     return "unknown"
 
 
 def distro_name():
     return read_os_release().get("PRETTY_NAME", "unknown")
+
+
+def distro_id():
+    release = read_os_release()
+    return release.get("ID", "unknown")
