@@ -1,3 +1,4 @@
+import argparse
 import subprocess
 import sys
 
@@ -9,24 +10,256 @@ from src import osinfo
 from src import project
 from src import sol2
 
-USAGE = """Usage: python main.py <command> [options]
 
-Commands:
-  help                          Show this help
-  os                            Show detected OS
-  deps                          Show dependencies for current OS
-  check-deps                    Check required dependencies
-  doctor                        Check dependencies and engine state
-  install-deps                  Install dependencies for current OS
-  install-sol2 [tag]            Install sol2 into ~/.jadidi
-  engine-sync [repo-url]        Clone or update engine source
-  engine-checkout <ref>         Checkout engine tag/branch/commit
-  engine-build                  Build engine in ~/.jadidi/builds/<tag>
-  clone <url> <path>            Clone a repository
-  current-tag <path>            Show latest tag
-  tag <path> <tag>              Create a tag
-  project-new <path> [version]  Create a minimal runnable project
-"""
+def cmd_os(args):
+    print(osinfo.distro_name())
+    print(osinfo.detect_distro())
+    return 0
+
+
+def cmd_deps(args):
+    distro = osinfo.detect_distro()
+    packages = deps.get_dependencies(distro)
+
+    if not packages:
+        print(f"Unsupported distro: {distro}", file=sys.stderr)
+        return 1
+
+    print(f"Distro: {distro}")
+    print("Dependencies:")
+
+    for package in packages:
+        print(f"  {package}")
+
+    return 0
+
+
+def cmd_check_deps(args):
+    return checks.cmd_check_deps()
+
+
+def cmd_doctor(args):
+    return checks.cmd_doctor()
+
+
+def cmd_install_deps(args):
+    distro = osinfo.detect_distro()
+    return deps.install_dependencies(distro)
+
+
+def cmd_install_sol2(args):
+    return sol2.install_sol2(args.tag)
+
+
+def cmd_engine_sync(args):
+    source = engine.sync(args.repo_url)
+    print(f"Engine source: {source}")
+    return 0
+
+
+def cmd_engine_checkout(args):
+    source = engine.checkout(args.ref)
+    version = engine.get_version_name()
+
+    print(f"Engine source: {source}")
+    print(f"Version: {version}")
+
+    return 0
+
+
+def cmd_engine_build(args):
+    return engine.build()
+
+
+def cmd_project_new(args):
+    return project.create_project(args.path, args.version)
+
+
+def cmd_clone(args):
+    git.clone_repo(args.url, args.path)
+    print(f"Cloned {args.url} into {args.path}")
+    return 0
+
+
+def cmd_current_tag(args):
+    tag = git.get_current_tag(args.path)
+    print(tag)
+    return 0
+
+
+def cmd_tag(args):
+    git.set_tag(args.path, args.tag)
+    print(f"Created tag {args.tag} in {args.path}")
+    return 0
+
+
+def build_parser():
+    parser = argparse.ArgumentParser(
+        prog="jadidi-hub",
+        description="jadidi engine hub",
+    )
+
+    subparsers = parser.add_subparsers(
+        dest="command",
+        metavar="command",
+        required=True,
+    )
+
+    p = subparsers.add_parser(
+        "os",
+        help="Show detected OS",
+    )
+    p.set_defaults(func=cmd_os)
+
+    p = subparsers.add_parser(
+        "deps",
+        help="Show dependencies for current OS",
+    )
+    p.set_defaults(func=cmd_deps)
+
+    p = subparsers.add_parser(
+        "check-deps",
+        help="Check required dependencies",
+    )
+    p.set_defaults(func=cmd_check_deps)
+
+    p = subparsers.add_parser(
+        "doctor",
+        help="Check dependencies and engine state",
+    )
+    p.set_defaults(func=cmd_doctor)
+
+    p = subparsers.add_parser(
+        "install-deps",
+        help="Install dependencies for current OS",
+    )
+    p.set_defaults(func=cmd_install_deps)
+
+    p = subparsers.add_parser(
+        "install-sol2",
+        help="Install sol2 into ~/.jadidi",
+    )
+    p.add_argument(
+        "tag",
+        nargs="?",
+        help="sol2 tag",
+    )
+    p.set_defaults(func=cmd_install_sol2)
+
+    p = subparsers.add_parser(
+        "engine-sync",
+        help="Clone or update engine source",
+    )
+    p.add_argument(
+        "repo_url",
+        nargs="?",
+        help="Engine git repository URL",
+    )
+    p.set_defaults(func=cmd_engine_sync)
+
+    p = subparsers.add_parser(
+        "engine-checkout",
+        help="Checkout engine tag/branch/commit",
+    )
+    p.add_argument(
+        "ref",
+        help="Tag, branch, or commit",
+    )
+    p.set_defaults(func=cmd_engine_checkout)
+
+    p = subparsers.add_parser(
+        "engine-build",
+        help="Build engine in ~/.jadidi/builds/<tag>",
+    )
+    p.set_defaults(func=cmd_engine_build)
+
+    p = subparsers.add_parser(
+        "project-new",
+        help="Create a minimal runnable project",
+    )
+    p.add_argument(
+        "path",
+        help="Project path",
+    )
+    p.add_argument(
+        "version",
+        nargs="?",
+        help="Engine build version/tag",
+    )
+    p.set_defaults(func=cmd_project_new)
+
+    p = subparsers.add_parser(
+        "clone",
+        help="Clone a repository",
+    )
+    p.add_argument(
+        "url",
+        help="Repository URL",
+    )
+    p.add_argument(
+        "path",
+        help="Destination path",
+    )
+    p.set_defaults(func=cmd_clone)
+
+    p = subparsers.add_parser(
+        "current-tag",
+        help="Show latest tag",
+    )
+    p.add_argument(
+        "path",
+        help="Repository path",
+    )
+    p.set_defaults(func=cmd_current_tag)
+
+    p = subparsers.add_parser(
+        "tag",
+        help="Create a tag",
+    )
+    p.add_argument(
+        "path",
+        help="Repository path",
+    )
+    p.add_argument(
+        "tag",
+        help="Tag name",
+    )
+    p.set_defaults(func=cmd_tag)
+
+    return parser
+
+
+def main(argv=None):
+    if argv is None:
+        argv = sys.argv[1:]
+
+    parser = build_parser()
+
+    if not argv:
+        parser.print_help()
+        return 1
+
+    if argv[0] in ("help", "--help", "-h"):
+        parser.print_help()
+        return 0
+
+    try:
+        args = parser.parse_args(argv)
+    except SystemExit as exc:
+        return exc.code if isinstance(exc.code, int) else 1
+
+    try:
+        return args.func(args) or 0
+    except subprocess.CalledProcessError as exc:
+        message = exc.stderr.strip() if exc.stderr else str(exc)
+        print(f"Command failed: {message}", file=sys.stderr)
+        return exc.returncode if exc.returncode else 1
+    except RuntimeError as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        return 1
+    except KeyboardInterrupt:
+        print("Interrupted", file=sys.stderr)
+        return 130
 
 
 def get_args():
@@ -37,178 +270,4 @@ def get_args():
 
 
 def parse_args(args, arg_count):
-    if arg_count == 1:
-        print(USAGE)
-        return 1
-
-    command = args[0]
-
-    if command in ("help", "--help", "-h"):
-        print(USAGE)
-        return 0
-
-    if command == "os":
-        print(osinfo.distro_name())
-        print(osinfo.detect_distro())
-        return 0
-
-    if command == "deps":
-        distro = osinfo.detect_distro()
-        packages = deps.get_dependencies(distro)
-
-        if not packages:
-            print(f"Unsupported distro: {distro}", file=sys.stderr)
-            return 1
-
-        print(f"Distro: {distro}")
-        print("Dependencies:")
-
-        for package in packages:
-            print(f"  {package}")
-
-        return 0
-
-    if command == "check-deps":
-        if arg_count != 2:
-            print("Usage: python main.py check-deps")
-            return 1
-
-        return checks.cmd_check_deps()
-
-    if command == "doctor":
-        if arg_count != 2:
-            print("Usage: python main.py doctor")
-            return 1
-
-        return checks.cmd_doctor()
-
-    if command == "install-deps":
-        distro = osinfo.detect_distro()
-        return deps.install_dependencies(distro)
-
-    if command == "install-sol2":
-        if arg_count > 3:
-            print("Usage: python main.py install-sol2 [tag]")
-            return 1
-
-        tag = args[1] if arg_count >= 3 else None
-
-        try:
-            return sol2.install_sol2(tag)
-        except subprocess.CalledProcessError as exc:
-            print(f"sol2 installation failed: {exc}", file=sys.stderr)
-            return 1
-        except RuntimeError as exc:
-            print(f"sol2 installation failed: {exc}", file=sys.stderr)
-            return 1
-
-    if command == "engine-sync":
-        if arg_count > 3:
-            print("Usage: python main.py engine-sync [repo-url]")
-            return 1
-
-        url = args[1] if arg_count >= 3 else None
-
-        try:
-            source = engine.sync(url)
-            print(f"Engine source: {source}")
-            return 0
-        except subprocess.CalledProcessError as exc:
-            print(f"engine sync failed: {exc}", file=sys.stderr)
-            return 1
-        except RuntimeError as exc:
-            print(f"engine sync failed: {exc}", file=sys.stderr)
-            return 1
-
-    if command == "engine-checkout":
-        if arg_count != 3:
-            print("Usage: python main.py engine-checkout <ref>")
-            return 1
-
-        try:
-            source = engine.checkout(args[1])
-            version = engine.get_version_name()
-
-            print(f"Engine source: {source}")
-            print(f"Version: {version}")
-
-            return 0
-        except subprocess.CalledProcessError as exc:
-            print(f"engine checkout failed: {exc}", file=sys.stderr)
-            return 1
-        except RuntimeError as exc:
-            print(f"engine checkout failed: {exc}", file=sys.stderr)
-            return 1
-
-    if command == "engine-build":
-        if arg_count != 2:
-            print("Usage: python main.py engine-build")
-            return 1
-
-        try:
-            return engine.build()
-        except subprocess.CalledProcessError as exc:
-            print(f"engine build failed: {exc}", file=sys.stderr)
-            return 1
-        except RuntimeError as exc:
-            print(f"engine build failed: {exc}", file=sys.stderr)
-            return 1
-
-    if command == "clone":
-        if arg_count != 4:
-            print("Usage: python main.py clone <url> <path>")
-            return 1
-
-        try:
-            git.clone_repo(args[1], args[2])
-            print(f"Cloned {args[1]} into {args[2]}")
-            return 0
-        except subprocess.CalledProcessError as exc:
-            print(f"git clone failed: {exc}", file=sys.stderr)
-            return 1
-
-    if command == "current-tag":
-        if arg_count != 3:
-            print("Usage: python main.py current-tag <path>")
-            return 1
-
-        try:
-            tag = git.get_current_tag(args[1])
-            print(tag)
-            return 0
-        except subprocess.CalledProcessError as exc:
-            message = exc.stderr.strip() if exc.stderr else str(exc)
-            print(f"git describe failed: {message}", file=sys.stderr)
-            return 1
-
-    if command == "tag":
-        if arg_count != 4:
-            print("Usage: python main.py tag <path> <tag>")
-            return 1
-
-        try:
-            git.set_tag(args[1], args[2])
-            print(f"Created tag {args[2]} in {args[1]}")
-            return 0
-        except subprocess.CalledProcessError as exc:
-            print(f"git tag failed: {exc}", file=sys.stderr)
-            return 1
-
-    if command == "project-new":
-        if arg_count < 3 or arg_count > 4:
-            print("Usage: python main.py project-new <path> [version]")
-            return 1
-
-        path = args[1]
-        version = args[2] if arg_count == 4 else None
-
-        try:
-            return project.create_project(path, version)
-        except RuntimeError as exc:
-            print(f"project creation failed: {exc}", file=sys.stderr)
-            return 1
-
-    print(f"Unknown command: {command}")
-    print(USAGE)
-
-    return 1
+    return main(args)

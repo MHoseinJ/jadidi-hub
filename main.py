@@ -4,8 +4,7 @@ from src import cli
 
 
 def main():
-    args, arg_count = cli.get_args()
-    return cli.parse_args(args, arg_count)
+    return cli.main()
 
 
 if __name__ == "__main__":
