@@ -6,6 +6,7 @@ from src import checks
 from src import deps
 from src import engine
 from src import git
+from src import interactive
 from src import osinfo
 from src import project
 from src import sol2
@@ -45,6 +46,10 @@ def cmd_doctor(args):
 
 def cmd_status(args):
     return status.cmd_status()
+
+
+def cmd_shell(args):
+    return interactive.run_shell()
     
 
 def cmd_install_deps(args):
@@ -241,6 +246,12 @@ def build_parser():
         help="Tag name",
     )
     p.set_defaults(func=cmd_tag)
+
+    p = subparsers.add_parser(
+        "shell",
+        help="Start interactive shell",
+    )
+    p.set_defaults(func=cmd_shell)
 
     return parser
 
