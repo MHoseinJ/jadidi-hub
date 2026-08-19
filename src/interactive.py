@@ -55,6 +55,10 @@ def run_shell():
             print_help()
             continue
 
+        if line in ("clear", "cls"):
+            print("\033[H\033[J", end="")
+            continue
+
         try:
             argv = shlex.split(line)
         except ValueError as exc:
