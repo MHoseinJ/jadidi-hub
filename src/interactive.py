@@ -21,6 +21,7 @@ Examples:
 
 Special commands:
   help    - Show this help
+  clear   - Clear the screen
   exit    - Exit the shell
   quit    - Exit the shell
 """
