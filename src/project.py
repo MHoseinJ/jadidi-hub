@@ -13,6 +13,13 @@ PROJECT_DIRS = [
     "Scripts",
 ]
 
+IDE_DIR_CANDIDATES = [
+    "ide autocompletion",
+    "ide_autocompletion",
+    "ide-autocompletion",
+    "IDE Autocompletion",
+]
+
 SYSTEM_FONT_CANDIDATES = [
     "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
     "/usr/share/fonts/TTF/DejaVuSans.ttf",
@@ -32,6 +39,38 @@ def local_icon():
 
 def local_font():
     return assets_dir() / "font.ttf"
+
+
+def normalize_name(name):
+    return "".join(ch for ch in name.lower() if ch.isalnum())
+
+
+def find_ide_autocompletion_dir():
+    source = paths.ENGINE_SOURCE_DIR
+
+    if not source.exists():
+        return None
+
+    for name in IDE_DIR_CANDIDATES:
+        candidate = source / name
+
+        if candidate.is_dir():
+            return candidate
+
+    wanted = {normalize_name(name) for name in IDE_DIR_CANDIDATES}
+
+    for child in source.iterdir():
+        if child.is_dir() and normalize_name(child.name) in wanted:
+            return child
+
+    for child in source.iterdir():
+        if child.is_dir():
+            normalized = normalize_name(child.name)
+
+            if "ide" in normalized and "autocompletion" in normalized:
+                return child
+
+    return None
 
 
 def make_bmp():
@@ -160,6 +199,20 @@ def copy_font(project_root):
     print(f"Warning: created empty {font_path}. Replace it with a real TTF font.")
 
 
+def copy_ide_autocompletion(project_root, ide_dir):
+    target = project_root / ide_dir.name
+
+    if target.exists():
+        if target.is_dir():
+            shutil.rmtree(target)
+        else:
+            target.unlink()
+
+    shutil.copytree(ide_dir, target)
+
+    return target
+
+
 def create_project(path, version=None):
     project_root = Path(path).expanduser().resolve()
 
@@ -168,6 +221,13 @@ def create_project(path, version=None):
 
     if project_root.exists() and any(project_root.iterdir()):
         raise RuntimeError(f"{project_root} is not empty")
+
+    ide_dir = find_ide_autocompletion_dir()
+
+    if not ide_dir:
+        raise RuntimeError(
+            "ide autocompletion directory not found in engine source"
+        )
 
     project_root.mkdir(parents=True, exist_ok=True)
 
@@ -178,6 +238,8 @@ def create_project(path, version=None):
     write_home_scene(project_root)
     copy_icon(project_root)
     copy_font(project_root)
+
+    ide_target = copy_ide_autocompletion(project_root, ide_dir)
 
     binary_src = find_binary(version)
     binary_dst = project_root / "jadidi"
@@ -193,5 +255,6 @@ def create_project(path, version=None):
     print(f"Project created: {project_root}")
     print(f"Engine binary: {binary_dst}")
     print(f"Binary source: {binary_src}")
+    print(f"IDE autocompletion: {ide_target}")
 
     return 0
