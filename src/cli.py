@@ -2,6 +2,7 @@ import subprocess
 import sys
 
 from src import deps
+from src import engine
 from src import git
 from src import osinfo
 from src import sol2
@@ -14,6 +15,9 @@ Commands:
   deps                          Show dependencies for current OS
   install-deps                  Install dependencies for current OS
   install-sol2 [tag]            Install sol2 into ~/.jadidi
+  engine-sync [repo-url]        Clone or update engine source
+  engine-checkout <ref>         Checkout engine tag/branch/commit
+  engine-build                  Build engine in ~/.jadidi/builds/<tag>
   clone <url> <path>            Clone a repository
   current-tag <path>            Show latest tag
   tag <path> <tag>              Create a tag
@@ -77,6 +81,58 @@ def parse_args(args, arg_count):
             return 1
         except RuntimeError as exc:
             print(f"sol2 installation failed: {exc}", file=sys.stderr)
+            return 1
+
+    if command == "engine-sync":
+        if arg_count > 3:
+            print("Usage: python main.py engine-sync [repo-url]")
+            return 1
+
+        url = args[1] if arg_count >= 3 else None
+
+        try:
+            source = engine.sync(url)
+            print(f"Engine source: {source}")
+            return 0
+        except subprocess.CalledProcessError as exc:
+            print(f"engine sync failed: {exc}", file=sys.stderr)
+            return 1
+        except RuntimeError as exc:
+            print(f"engine sync failed: {exc}", file=sys.stderr)
+            return 1
+
+    if command == "engine-checkout":
+        if arg_count != 3:
+            print("Usage: python main.py engine-checkout <ref>")
+            return 1
+
+        try:
+            source = engine.checkout(args[1])
+            version = engine.get_version_name()
+
+            print(f"Engine source: {source}")
+            print(f"Version: {version}")
+
+            return 0
+        except subprocess.CalledProcessError as exc:
+            print(f"engine checkout failed: {exc}", file=sys.stderr)
+            return 1
+        except RuntimeError as exc:
+            print(f"engine checkout failed: {exc}", file=sys.stderr)
+            return 1
+
+    if command == "engine-build":
+        if arg_count != 2:
+            print("Usage: python main.py engine-build")
+            return 1
+
+        try:
+            return engine.build()
+        except subprocess.CalledProcessError as exc:
+            print(f"engine build failed: {exc}", file=sys.stderr)
+            return 1
+        except RuntimeError as exc:
+            print(f"engine build failed: {exc}", file=sys.stderr)
             return 1
 
     if command == "clone":
