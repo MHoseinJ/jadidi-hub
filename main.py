@@ -1,5 +1,12 @@
+import sys
+
+from src import cli
+
+
 def main():
-    print("hello world!")
+    args, arg_count = cli.get_args()
+    return cli.parse_args(args, arg_count)
+
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
