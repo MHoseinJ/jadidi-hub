@@ -82,6 +82,23 @@ def install_dependencies(distro):
         print("Supported families: debian, fedora, arch", file=sys.stderr)
         return 1
 
+    if distro == "windows":
+        print("Windows detected.", file=sys.stderr)
+        print("Automatic dependency installation is not supported on Windows.", file=sys.stderr)
+        print("", file=sys.stderr)
+        print("Please install the following manually or via vcpkg/winget:", file=sys.stderr)
+        print("  - SDL2", file=sys.stderr)
+        print("  - SDL2_image", file=sys.stderr)
+        print("  - SDL2_ttf", file=sys.stderr)
+        print("  - SDL2_mixer", file=sys.stderr)
+        print("  - Lua 5.4", file=sys.stderr)
+        print("  - OpenGL", file=sys.stderr)
+        print("  - sol2", file=sys.stderr)
+        print("", file=sys.stderr)
+        print("Recommended: use vcpkg with:", file=sys.stderr)
+        print("  vcpkg install sdl2 sdl2-image sdl2-ttf sdl2-mixer lua", file=sys.stderr)
+        return 1
+
     try:
         if distro == "debian":
             run_command(with_sudo(["apt", "update"]))

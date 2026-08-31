@@ -3,6 +3,7 @@ from pathlib import Path
 
 from src import git
 from src import paths
+from src import osinfo
 
 ENGINE_REPO_FILE = paths.BASE_DIR / "engine_repo"
 
@@ -98,12 +99,18 @@ def build():
     build_dir = paths.BUILDS_DIR / version
     build_dir.mkdir(parents=True, exist_ok=True)
 
+    bin_name = osinfo.binary_name()
+
     configure_cmd = [
         "cmake",
         "-S", str(source),
         "-B", str(build_dir),
         "-DCMAKE_BUILD_TYPE=Release",
+        "-DJADIDI_BUILD_PROFILE=generic",
     ]
+
+    if osinfo.detect_platform() == "windows":
+        configure_cmd.extend(["-G", "Ninja"])
 
     build_cmd = [
         "cmake",
@@ -117,7 +124,7 @@ def build():
     print("$", " ".join(build_cmd))
     subprocess.run(build_cmd, check=True)
 
-    binary = build_dir / "jadidi"
+    binary = build_dir / bin_name
 
     print(f"Build directory: {build_dir}")
 

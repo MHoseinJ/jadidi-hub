@@ -1,4 +1,5 @@
 from pathlib import Path
+import platform
 
 FAMILY_MAP = {
     "debian": "debian",
@@ -54,7 +55,22 @@ def _resolve_family(dist_id):
     return None
 
 
+def detect_platform():
+    system = platform.system()
+
+    if system == "Windows":
+        return "windows"
+
+    if system == "Linux":
+        return "linux"
+
+    return "unknown"
+
+
 def detect_distro():
+    if detect_platform() == "windows":
+        return "windows"
+
     release = read_os_release()
 
     candidates = []
@@ -76,9 +92,22 @@ def detect_distro():
 
 
 def distro_name():
+    if detect_platform() == "windows":
+        return platform.platform()
+
     return read_os_release().get("PRETTY_NAME", "unknown")
 
 
 def distro_id():
+    if detect_platform() == "windows":
+        return "windows"
+
     release = read_os_release()
     return release.get("ID", "unknown")
+
+
+def binary_name():
+    if detect_platform() == "windows":
+        return "jadidi.exe"
+
+    return "jadidi"

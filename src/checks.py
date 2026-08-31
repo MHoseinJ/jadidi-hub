@@ -231,6 +231,21 @@ def cmd_doctor():
     print(osinfo.distro_name())
     print(osinfo.detect_distro())
 
+    if osinfo.detect_platform() == "windows":
+        print("")
+        print("Windows detected.")
+        print("Doctor checks are designed for Linux.")
+        print("On Windows, ensure the following are installed:")
+        print("  - CMake")
+        print("  - A C++17 compiler (MSVC or MinGW)")
+        print("  - Ninja")
+        print("  - SDL2, SDL2_image, SDL2_ttf, SDL2_mixer (via vcpkg or manual)")
+        print("  - Lua 5.4")
+        print("  - OpenGL")
+        print("")
+        print("Doctor finished.")
+        return 0
+
     print("")
     print("Dependencies:")
     dep_failed = print_checks(dependency_checks())

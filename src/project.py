@@ -7,6 +7,7 @@ from pathlib import Path
 
 from src import engine
 from src import paths
+from src import osinfo
 
 PROJECT_DIRS = [
     "Fonts",
@@ -131,7 +132,7 @@ def find_binary(version=None):
 
     if version:
         version = engine.safe_name(version)
-        binary = builds_dir / version / "jadidi"
+        binary = builds_dir / version / osinfo.binary_name()
 
         if binary.exists():
             return binary
@@ -140,7 +141,7 @@ def find_binary(version=None):
 
     try:
         current_version = engine.get_version_name()
-        binary = builds_dir / current_version / "jadidi"
+        binary = builds_dir / current_version / osinfo.binary_name()
 
         if binary.exists():
             return binary
@@ -155,7 +156,7 @@ def find_binary(version=None):
         )
 
         for candidate in candidates:
-            binary = candidate / "jadidi"
+            binary = candidate / osinfo.binary_name()
 
             if binary.exists():
                 return binary
@@ -261,7 +262,7 @@ def write_gitignore(project_root):
     if gitignore_path.exists():
         return
 
-    gitignore_path.write_text("jadidi\n")
+    gitignore_path.write_text(f"{osinfo.binary_name()}\n")
 
 
 def run_git_init(project_root):
@@ -305,7 +306,7 @@ def create_project(path, version=None, git_init=False):
     ide_target = copy_ide_autocompletion(project_root, ide_dir)
 
     binary_src = find_binary(version)
-    binary_dst = project_root / "jadidi"
+    binary_dst = project_root / osinfo.binary_name()
 
     shutil.copy2(binary_src, binary_dst)
     binary_dst.chmod(
