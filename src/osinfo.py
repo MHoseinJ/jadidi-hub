@@ -22,6 +22,7 @@ FAMILY_MAP = {
     "cachyos": "arch",
     "garuda": "arch",
     "artix": "arch",
+    "void": "void",
 }
 
 

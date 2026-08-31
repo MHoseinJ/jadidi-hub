@@ -39,6 +39,17 @@ DEPENDENCIES = {
         "sdl2_mixer",
         "lua54",
     ],
+    "void": [
+        "base-devel",
+        "cmake",
+        "git",
+        "pkg-config",
+        "SDL2-devel",
+        "SDL2_image-devel",
+        "SDL2_ttf-devel",
+        "SDL2_mixer-devel",
+        "lua54-devel",
+    ],
 }
 
 
@@ -81,6 +92,10 @@ def install_dependencies(distro):
 
         elif distro == "arch":
             run_command(with_sudo(["pacman", "-S", "--needed", *packages]))
+            
+        elif distro == "void":
+            run_command(with_sudo(["xbps-install", "-Su"]))
+            run_command(with_sudo(["xbps-install", "-y", *packages]))
 
         else:
             print(f"Unsupported distro: {distro}", file=sys.stderr)
