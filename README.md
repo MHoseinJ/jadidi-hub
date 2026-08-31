@@ -109,12 +109,14 @@ A project created with `project-new` has this layout:
     ├── config.json
     ├── icon.bmp
     ├── jadidi
-    ├── ide autocompletion/
     ├── Fonts/
     │   └── font.ttf
     ├── Scenes/
     │   └── home.json
-    └── Scripts/
+    ├── Scripts/
+    └── Shaders/
+        ├── sprite.frag
+        └── sprite.vert
 
 The `ide autocompletion` directory is copied from the engine repository and
 contains the Lua API definitions used by editors.
