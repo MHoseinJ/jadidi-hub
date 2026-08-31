@@ -8,12 +8,39 @@ from pathlib import Path
 from src import engine
 from src import paths
 
-
 PROJECT_DIRS = [
     "Fonts",
     "Scenes",
     "Scripts",
+    "Shaders",
 ]
+
+SPRITE_VERTEX_SHADER = """#version 330 core
+layout (location = 0) in vec2 aPos;
+layout (location = 1) in vec2 aTexCoord;
+
+out vec2 TexCoord;
+
+uniform mat4 model;
+uniform mat4 projection;
+
+void main() {
+    gl_Position = projection * model * vec4(aPos, 0.0, 1.0);
+    TexCoord = aTexCoord;
+}
+"""
+
+SPRITE_FRAGMENT_SHADER = """#version 330 core
+in vec2 TexCoord;
+out vec4 FragColor;
+
+uniform sampler2D image;
+uniform vec4 spriteColor;
+
+void main() {
+    FragColor = spriteColor * texture(image, TexCoord);
+}
+"""
 
 IDE_DIR_CANDIDATES = [
     "ide autocompletion",
@@ -149,7 +176,7 @@ def write_config(project_root):
             "fullscreen": False,
             "height": 720,
             "icon": "icon.bmp",
-            "renderer": "sdl",
+            "renderer": "opengl",
             "title": project_root.name,
             "width": 1280,
         }
@@ -165,6 +192,19 @@ def write_home_scene(project_root):
         return
 
     home_path.write_text('{ "objects": [] }\n')
+
+
+def write_shaders(project_root):
+    shaders_dir = project_root / "Shaders"
+
+    vert_path = shaders_dir / "sprite.vert"
+    frag_path = shaders_dir / "sprite.frag"
+
+    if not vert_path.exists():
+        vert_path.write_text(SPRITE_VERTEX_SHADER.lstrip())
+
+    if not frag_path.exists():
+        frag_path.write_text(SPRITE_FRAGMENT_SHADER.lstrip())
 
 
 def copy_icon(project_root):
@@ -201,6 +241,20 @@ def copy_font(project_root):
     print(f"Warning: created empty {font_path}. Replace it with a real TTF font.")
 
 
+def copy_ide_autocompletion(project_root, ide_dir):
+    target = project_root / ide_dir.name
+
+    if target.exists():
+        if target.is_dir():
+            shutil.rmtree(target)
+        else:
+            target.unlink()
+
+    shutil.copytree(ide_dir, target)
+
+    return target
+
+
 def write_gitignore(project_root):
     gitignore_path = project_root / ".gitignore"
 
@@ -219,20 +273,6 @@ def run_git_init(project_root):
         cwd=project_root,
         check=True,
     )
-    
-
-def copy_ide_autocompletion(project_root, ide_dir):
-    target = project_root / ide_dir.name
-
-    if target.exists():
-        if target.is_dir():
-            shutil.rmtree(target)
-        else:
-            target.unlink()
-
-    shutil.copytree(ide_dir, target)
-
-    return target
 
 
 def create_project(path, version=None, git_init=False):
@@ -258,6 +298,7 @@ def create_project(path, version=None, git_init=False):
 
     write_config(project_root)
     write_home_scene(project_root)
+    write_shaders(project_root)
     copy_icon(project_root)
     copy_font(project_root)
 
