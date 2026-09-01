@@ -39,9 +39,14 @@ out vec4 FragColor;
 
 uniform sampler2D image;
 uniform vec4 spriteColor;
+uniform bool useTexture;
 
 void main() {
-    FragColor = spriteColor * texture(image, TexCoord);
+    if (useTexture) {
+        FragColor = spriteColor * texture(image, TexCoord);
+    } else {
+        FragColor = spriteColor;
+    }
 }
 """
 
