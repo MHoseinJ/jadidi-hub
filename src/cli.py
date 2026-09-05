@@ -11,6 +11,7 @@ from src import osinfo
 from src import project
 from src import sol2
 from src import status
+from src import editors
 
 
 def cmd_os(args):
@@ -101,6 +102,14 @@ def cmd_tag(args):
     git.set_tag(args.path, args.tag)
     print(f"Created tag {args.tag} in {args.path}")
     return 0
+
+
+def cmd_setup_editor(args):
+    try:
+        return editors.setup_editor(args.path, args.editor)
+    except RuntimeError as exc:
+        print(f"Editor setup failed: {exc}", file=sys.stderr)
+        return 1
 
 
 def build_parser():
@@ -252,6 +261,23 @@ def build_parser():
         help="Start interactive shell",
     )
     p.set_defaults(func=cmd_shell)
+
+    p = subparsers.add_parser(
+        "setup-editor",
+        help="Setup editor integration (VSCode/Zed) for a project",
+    )
+    p.add_argument(
+        "path",
+        nargs="?",
+        default=".",
+        help="Project path (default: current directory)",
+    )
+    p.add_argument(
+        "--editor",
+        choices=["vscode", "zed"],
+        help="Setup only a specific editor (default: both)",
+    )
+    p.set_defaults(func=cmd_setup_editor)
 
     return parser
 
