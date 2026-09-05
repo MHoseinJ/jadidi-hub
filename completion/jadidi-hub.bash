@@ -3,7 +3,7 @@ _jadidi_hub() {
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
 
-    commands="help os deps check-deps doctor install-deps install-sol2 status engine-sync engine-checkout engine-build project-new clone current-tag tag"
+    commands="help os deps check-deps doctor install-deps install-sol2 status shell engine-sync engine-checkout engine-build project-new clone current-tag tag setup-editor"
 
     if [[ ${COMP_CWORD} -eq 1 ]]; then
         if [[ "${cur}" == -* ]]; then
@@ -21,6 +21,9 @@ _jadidi_hub() {
             project-new)
                 COMPREPLY=( $(compgen -W "--git-init --help" -- "${cur}") )
                 ;;
+            setup-editor)
+                COMPREPLY=( $(compgen -W "--editor --help" -- "${cur}") )
+                ;;
             *)
                 COMPREPLY=( $(compgen -W "--help" -- "${cur}") )
                 ;;
@@ -31,6 +34,14 @@ _jadidi_hub() {
     case "${cmd}" in
         project-new)
             COMPREPLY=( $(compgen -d -- "${cur}") )
+            return 0
+            ;;
+        setup-editor)
+            if [[ "${prev}" == "--editor" ]]; then
+                COMPREPLY=( $(compgen -W "vscode zed" -- "${cur}") )
+            else
+                COMPREPLY=( $(compgen -d -- "${cur}") )
+            fi
             return 0
             ;;
         clone)

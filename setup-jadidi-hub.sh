@@ -41,7 +41,7 @@ _jadidi_hub() {
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
 
-    commands="help os deps check-deps doctor install-deps install-sol2 status engine-sync engine-checkout engine-build project-new clone current-tag tag"
+    commands="help os deps check-deps doctor install-deps install-sol2 status shell engine-sync engine-checkout engine-build project-new clone current-tag tag setup-editor"
 
     if [[ ${COMP_CWORD} -eq 1 ]]; then
         if [[ "${cur}" == -* ]]; then
@@ -59,6 +59,9 @@ _jadidi_hub() {
             project-new)
                 COMPREPLY=( $(compgen -W "--git-init --help" -- "${cur}") )
                 ;;
+            setup-editor)
+                COMPREPLY=( $(compgen -W "--editor --help" -- "${cur}") )
+                ;;
             *)
                 COMPREPLY=( $(compgen -W "--help" -- "${cur}") )
                 ;;
@@ -69,6 +72,14 @@ _jadidi_hub() {
     case "${cmd}" in
         project-new)
             COMPREPLY=( $(compgen -d -- "${cur}") )
+            return 0
+            ;;
+        setup-editor)
+            if [[ "${prev}" == "--editor" ]]; then
+                COMPREPLY=( $(compgen -W "vscode zed" -- "${cur}") )
+            else
+                COMPREPLY=( $(compgen -d -- "${cur}") )
+            fi
             return 0
             ;;
         clone)
@@ -99,7 +110,7 @@ EOF
 
 cat > "$FISH_COMPLETION" <<'EOF'
 function __jadidi_hub_no_subcommand
-    not __fish_seen_subcommand_from help os deps check-deps doctor install-deps install-sol2 status shell engine-sync engine-checkout engine-build project-new clone current-tag tag
+    not __fish_seen_subcommand_from help os deps check-deps doctor install-deps install-sol2 status shell engine-sync engine-checkout engine-build project-new clone current-tag tag setup-editor
 end
 
 complete -c jadidi-hub -n "__jadidi_hub_no_subcommand" -a help -d "Show help"
@@ -118,9 +129,13 @@ complete -c jadidi-hub -n "__jadidi_hub_no_subcommand" -a project-new -d "Create
 complete -c jadidi-hub -n "__jadidi_hub_no_subcommand" -a clone -d "Clone a repository"
 complete -c jadidi-hub -n "__jadidi_hub_no_subcommand" -a current-tag -d "Show latest tag"
 complete -c jadidi-hub -n "__jadidi_hub_no_subcommand" -a tag -d "Create a tag"
+complete -c jadidi-hub -n "__jadidi_hub_no_subcommand" -a setup-editor -d "Setup editor integration (VSCode/Zed)"
 
 complete -c jadidi-hub -n "__fish_seen_subcommand_from project-new" -l git-init -d "Run git init in project directory"
 complete -c jadidi-hub -n "__fish_seen_subcommand_from project-new" -xa "(__fish_complete_directories)"
+
+complete -c jadidi-hub -n "__fish_seen_subcommand_from setup-editor" -l editor -d "Setup only a specific editor" -xa "vscode zed"
+complete -c jadidi-hub -n "__fish_seen_subcommand_from setup-editor" -xa "(__fish_complete_directories)"
 
 complete -c jadidi-hub -n "__fish_seen_subcommand_from clone" -xa "(__fish_complete_directories)"
 complete -c jadidi-hub -n "__fish_seen_subcommand_from current-tag" -xa "(__fish_complete_directories)"
