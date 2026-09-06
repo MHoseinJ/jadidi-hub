@@ -30,14 +30,14 @@ def find_schemas_dir():
     return None
 
 
-def ensure_schemas_available(project_root):
+def ensure_schemas_available(project_root, subdir=".vscode"):
     schemas_dir = find_schemas_dir()
 
     if not schemas_dir:
         print("Warning: schemas directory not found in jadidi-hub.")
         return None
 
-    target_dir = project_root / ".vscode" / "schemas"
+    target_dir = project_root / subdir / "schemas"
     target_dir.mkdir(parents=True, exist_ok=True)
 
     for schema_file in ("animation.schema.json", "scene.schema.json"):
@@ -53,7 +53,7 @@ def ensure_schemas_available(project_root):
 
 
 def setup_vscode(project_root):
-    schemas_dir = ensure_schemas_available(project_root)
+    ensure_schemas_available(project_root, subdir=".vscode")
 
     vscode_dir = project_root / ".vscode"
     vscode_dir.mkdir(parents=True, exist_ok=True)
@@ -96,6 +96,8 @@ def setup_vscode(project_root):
 
 
 def setup_zed(project_root):
+    ensure_schemas_available(project_root, subdir=".zed")
+
     zed_dir = project_root / ".zed"
     zed_dir.mkdir(parents=True, exist_ok=True)
 
@@ -109,16 +111,34 @@ def setup_zed(project_root):
         except json.JSONDecodeError:
             settings = {}
 
-    if "languages" not in settings:
-        settings["languages"] = {}
+    lsp = settings.setdefault("lsp", {})
+    json_ls = lsp.setdefault("json-language-server", {})
+    ls_settings = json_ls.setdefault("settings", {})
+    json_cfg = ls_settings.setdefault("json", {})
+    schemas_list = json_cfg.setdefault("schemas", [])
 
-    if "JSON" not in settings["languages"]:
-        settings["languages"]["JSON"] = {}
+    animation_entry = {
+        "fileMatch": ["Animations/*.json"],
+        "url": "./schemas/animation.schema.json"
+    }
 
-    settings["languages"]["JSON"]["format_on_save"] = "on"
-    settings["languages"]["JSON"]["tab_size"] = 2
+    scene_entry = {
+        "fileMatch": ["Scenes/*.json"],
+        "url": "./schemas/scene.schema.json"
+    }
 
-    settings_path.write_text(json.dumps(settings, indent=4) + "\n")
+    new_schemas = [
+        s for s in schemas_list
+        if s.get("url") not in (
+            "./schemas/animation.schema.json",
+            "./schemas/scene.schema.json",
+        )
+    ]
+
+    new_schemas.extend([scene_entry, animation_entry])
+    json_cfg["schemas"] = new_schemas
+
+    settings_path.write_text(json.dumps(settings, indent=2) + "\n")
 
     print(f"Zed configured: {settings_path}")
     return settings_path
