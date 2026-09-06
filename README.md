@@ -94,6 +94,7 @@ Then run your project:
 | `engine-checkout <ref>` | Checkout engine tag, branch, or commit |
 | `engine-build` | Build engine into `~/.jadidi/builds/<tag>` |
 | `project-new <path> [version]` | Create a minimal runnable project |
+| `project-new --force` | Create project in non-empty directory |
 | `setup-editor [path]` | Setup VSCode/Zed editor integration |
 | `shell` | Start interactive shell |
 | `clone <url> <path>` | Clone a repository |
