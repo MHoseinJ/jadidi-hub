@@ -21,6 +21,7 @@ complete -c jadidi-hub -n "__jadidi_hub_no_subcommand" -a tag -d "Create a tag"
 complete -c jadidi-hub -n "__jadidi_hub_no_subcommand" -a setup-editor -d "Setup editor integration (VSCode/Zed)"
 
 complete -c jadidi-hub -n "__fish_seen_subcommand_from project-new" -l git-init -d "Run git init in project directory"
+complete -c jadidi-hub -n "__fish_seen_subcommand_from project-new" -l force -d "Create project in non-empty directory"
 complete -c jadidi-hub -n "__fish_seen_subcommand_from project-new" -xa "(__fish_complete_directories)"
 
 complete -c jadidi-hub -n "__fish_seen_subcommand_from setup-editor" -l editor -d "Setup only a specific editor" -xa "vscode zed"

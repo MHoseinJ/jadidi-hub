@@ -283,14 +283,14 @@ def run_git_init(project_root):
     )
 
 
-def create_project(path, version=None, git_init=False):
+def create_project(path, version=None, git_init=False, force=False):
     project_root = Path(path).expanduser().resolve()
 
     if project_root.exists() and project_root.is_file():
         raise RuntimeError(f"{project_root} is a file")
 
-    if project_root.exists() and any(project_root.iterdir()):
-        raise RuntimeError(f"{project_root} is not empty")
+    if project_root.exists() and any(project_root.iterdir()) and not force:
+        raise RuntimeError(f"{project_root} is not empty (use --force to override)")
 
     ide_dir = find_ide_autocompletion_dir()
 

@@ -19,7 +19,7 @@ _jadidi_hub() {
     if [[ "${cur}" == -* ]]; then
         case "${cmd}" in
             project-new)
-                COMPREPLY=( $(compgen -W "--git-init --help" -- "${cur}") )
+                COMPREPLY=( $(compgen -W "--git-init --force --help" -- "${cur}") )
                 ;;
             setup-editor)
                 COMPREPLY=( $(compgen -W "--editor --help" -- "${cur}") )
