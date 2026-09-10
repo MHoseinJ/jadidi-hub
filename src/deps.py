@@ -16,6 +16,7 @@ DEPENDENCIES = {
         "libsdl2-ttf-dev",
         "libsdl2-mixer-dev",
         "liblua5.4-dev",
+        "libbox2d-dev",
     ],
     "fedora": [
         "gcc-c++",
@@ -27,6 +28,7 @@ DEPENDENCIES = {
         "SDL2_ttf-devel",
         "SDL2_mixer-devel",
         "lua-devel",
+        "box2d-devel",
     ],
     "arch": [
         "base-devel",
@@ -37,7 +39,8 @@ DEPENDENCIES = {
         "sdl2_image",
         "sdl2_ttf",
         "sdl2_mixer",
-        "lua54",
+        "lua",
+        "box2d",
     ],
     "void": [
         "base-devel",
@@ -49,6 +52,7 @@ DEPENDENCIES = {
         "SDL2_ttf-devel",
         "SDL2_mixer-devel",
         "lua54-devel",
+        "box2d-devel",
     ],
 }
 
