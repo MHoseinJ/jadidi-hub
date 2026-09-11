@@ -107,22 +107,24 @@ def setup_zed(project_root):
     json_cfg = ls_settings.setdefault("json", {})
     schemas_list = json_cfg.setdefault("schemas", [])
 
+    anim_url = f"file://{project_root}/.zed/schemas/animation.schema.json"
+    scene_url = f"file://{project_root}/.zed/schemas/scene.schema.json"
+
     animation_entry = {
         "fileMatch": ["Animations/*.json"],
-        "url": "./schemas/animation.schema.json"
+        "url": anim_url
     }
 
     scene_entry = {
         "fileMatch": ["Scenes/*.json"],
-        "url": "./schemas/scene.schema.json"
+        "url": scene_url
     }
 
     new_schemas = [
         s for s in schemas_list
-        if s.get("url") not in (
-            "./schemas/animation.schema.json",
-            "./schemas/scene.schema.json",
-        )
+        if s.get("url") not in (anim_url, scene_url)
+        and "./schemas/animation.schema.json" not in str(s.get("url", ""))
+        and "./schemas/scene.schema.json" not in str(s.get("url", ""))
     ]
 
     new_schemas.extend([scene_entry, animation_entry])
