@@ -3,7 +3,7 @@ _jadidi_hub() {
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
 
-    commands="help os deps check-deps doctor install-deps install-sol2 status shell engine-sync engine-checkout engine-build project-new clone current-tag tag setup-editor"
+    commands="help os deps check-deps doctor install-deps install-sol2 status shell engine-sync engine-checkout engine-build project-new clone current-tag tag setup-editor migrate-guide"
 
     if [[ ${COMP_CWORD} -eq 1 ]]; then
         if [[ "${cur}" == -* ]]; then

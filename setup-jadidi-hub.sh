@@ -41,7 +41,7 @@ _jadidi_hub() {
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
 
-    commands="help os deps check-deps doctor install-deps install-sol2 status shell engine-sync engine-checkout engine-build project-new clone current-tag tag setup-editor"
+    commands="help os deps check-deps doctor install-deps install-sol2 status shell engine-sync engine-checkout engine-build project-new clone current-tag tag setup-editor migrate-guide"
 
     if [[ ${COMP_CWORD} -eq 1 ]]; then
         if [[ "${cur}" == -* ]]; then
@@ -130,6 +130,8 @@ complete -c jadidi-hub -n "__jadidi_hub_no_subcommand" -a clone -d "Clone a repo
 complete -c jadidi-hub -n "__jadidi_hub_no_subcommand" -a current-tag -d "Show latest tag"
 complete -c jadidi-hub -n "__jadidi_hub_no_subcommand" -a tag -d "Create a tag"
 complete -c jadidi-hub -n "__jadidi_hub_no_subcommand" -a setup-editor -d "Setup editor integration (VSCode/Zed)"
+
+complete -c jadidi-hub -n "__jadidi_hub_no_subcommand" -a migrate-guide -d "Show manual migration guide for older projects"
 
 complete -c jadidi-hub -n "__fish_seen_subcommand_from project-new" -l git-init -d "Run git init in project directory"
 complete -c jadidi-hub -n "__fish_seen_subcommand_from project-new" -l force -d "Create project in non-empty directory"

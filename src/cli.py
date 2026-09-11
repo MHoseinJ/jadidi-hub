@@ -11,6 +11,7 @@ from src import osinfo
 from src import project
 from src import sol2
 from src import status
+from src import guides
 from src import editors
 
 
@@ -43,6 +44,10 @@ def cmd_check_deps(args):
 
 def cmd_doctor(args):
     return checks.cmd_doctor()
+
+
+def cmd_migrate_guide(args):
+    return guides.show_migrate_guide()
 
 
 def cmd_status(args):
@@ -283,6 +288,12 @@ def build_parser():
         help="Setup only a specific editor (default: both)",
     )
     p.set_defaults(func=cmd_setup_editor)
+    
+    p = subparsers.add_parser(
+        "migrate-guide",
+        help="Show manual migration guide for older projects",
+    )
+    p.set_defaults(func=cmd_migrate_guide)
 
     return parser
 
