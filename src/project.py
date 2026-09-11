@@ -269,7 +269,48 @@ def write_gitignore(project_root):
     if gitignore_path.exists():
         return
 
-    gitignore_path.write_text(f"{osinfo.binary_name()}\n")
+    bin_name = osinfo.binary_name()
+    gitignore_path.write_text(
+        f"{bin_name}\n"
+        f"# Editor settings contain absolute paths; regenerate with:\n"
+        f"#   jadidi-hub setup-editor <project-path>\n"
+        f".vscode/settings.json\n"
+        f".zed/settings.json\n"
+    )
+
+
+def write_setup_script(project_root):
+    setup_path = project_root / "setup.sh"
+
+    if setup_path.exists():
+        return
+
+    content = """#!/usr/bin/env bash
+# Run this once after cloning the project to set up editor integration.
+#
+# Prerequisites:
+#   - jadidi-hub is installed and in PATH
+#   - Engine is already synced/built (or run: jadidi-hub engine-sync && jadidi-hub engine-build)
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+echo "Setting up editor integration for: $SCRIPT_DIR"
+
+if command -v jadidi-hub >/dev/null 2>&1; then
+    jadidi-hub setup-editor "$SCRIPT_DIR"
+else
+    echo "Error: jadidi-hub not found in PATH." >&2
+    echo "Install it from: https://github.com/MHoseinJ/jadidi-hub" >&2
+    exit 1
+fi
+
+echo ""
+echo "Setup complete. You can now open the project in VSCode or Zed."
+"""
+
+    setup_path.write_text(content)
+    setup_path.chmod(0o755)
 
 
 def run_git_init(project_root):
@@ -332,5 +373,7 @@ def create_project(path, version=None, git_init=False, force=False):
         write_gitignore(project_root)
         run_git_init(project_root)
         print(f"Git repository initialized: {project_root / '.git'}")
+
+    write_setup_script(project_root)
 
     return 0
