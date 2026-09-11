@@ -5,27 +5,15 @@ from pathlib import Path
 from src import paths
 
 
-def schemas_source_dir():
-    return paths.BASE_DIR / ".." / ".." / "schemas"
-
-
-def bundled_schemas_dir():
-    return Path(__file__).resolve().parent.parent / "schemas"
-
-
 def find_schemas_dir():
-    candidates = [
-        bundled_schemas_dir(),
-        schemas_source_dir(),
-    ]
+    engine_schemas = paths.ENGINE_SOURCE_DIR / "schemas"
 
-    for candidate in candidates:
-        if candidate.is_dir():
-            anim = candidate / "animation.schema.json"
-            scene = candidate / "scene.schema.json"
+    if engine_schemas.is_dir():
+        anim = engine_schemas / "animation.schema.json"
+        scene = engine_schemas / "scene.schema.json"
 
-            if anim.exists() and scene.exists():
-                return candidate
+        if anim.exists() and scene.exists():
+            return engine_schemas
 
     return None
 
@@ -34,7 +22,9 @@ def ensure_schemas_available(project_root, subdir=".vscode"):
     schemas_dir = find_schemas_dir()
 
     if not schemas_dir:
-        print("Warning: schemas directory not found in jadidi-hub.")
+        print("Warning: schemas not found in engine source.")
+        print("Schema files are available in engine v0.5.1 and later.")
+        print("Skipping schema setup for editor integration.")
         return None
 
     target_dir = project_root / subdir / "schemas"

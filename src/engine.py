@@ -36,6 +36,28 @@ def resolve_repo_url(url=None):
     )
 
 
+def get_latest_tag():
+    source = paths.ENGINE_SOURCE_DIR
+
+    if not git.is_git_repo(source):
+        return None
+
+    result = subprocess.run(
+        ["git", "tag", "--sort=-v:refname"],
+        cwd=source,
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+
+    tags = [line.strip() for line in result.stdout.splitlines() if line.strip()]
+
+    if not tags:
+        return None
+
+    return tags[0]
+
+
 def sync(repo_url=None):
     paths.ensure_base_dirs()
 
@@ -51,6 +73,16 @@ def sync(repo_url=None):
     else:
         git.clone_repo(url, source)
         git.fetch_tags(source)
+
+    # Auto-checkout latest stable tag
+    latest_tag = get_latest_tag()
+
+    if latest_tag:
+        git.checkout(source, latest_tag)
+        print(f"Auto-checked out latest tag: {latest_tag}")
+    else:
+        print("Warning: no tags found in engine repository.")
+        print("Staying on current branch/commit.")
 
     return source
 
