@@ -5,13 +5,26 @@ from pathlib import Path
 from src import paths
 
 
-def find_schemas_dir():
-    engine_schemas = paths.ENGINE_SOURCE_DIR / "schemas"
+def find_schemas_dir(project_root=None):
+    if project_root:
+        project_schemas = Path(project_root) / "schemas"
+        if project_schemas.is_dir():
+            anim = project_schemas / "animation.schema.json"
+            scene = project_schemas / "scene.schema.json"
+            if anim.exists() and scene.exists():
+                return project_schemas
 
+    template_schemas = paths.ENGINE_SOURCE_DIR / "base_template" / "schemas"
+    if template_schemas.is_dir():
+        anim = template_schemas / "animation.schema.json"
+        scene = template_schemas / "scene.schema.json"
+        if anim.exists() and scene.exists():
+            return template_schemas
+
+    engine_schemas = paths.ENGINE_SOURCE_DIR / "schemas"
     if engine_schemas.is_dir():
         anim = engine_schemas / "animation.schema.json"
         scene = engine_schemas / "scene.schema.json"
-
         if anim.exists() and scene.exists():
             return engine_schemas
 
@@ -19,11 +32,11 @@ def find_schemas_dir():
 
 
 def ensure_schemas_available(project_root, subdir=".vscode"):
-    schemas_dir = find_schemas_dir()
+    schemas_dir = find_schemas_dir(project_root)
 
     if not schemas_dir:
-        print("Warning: schemas not found in engine source.")
-        print("Schema files are available in engine v0.5.1 and later.")
+        print("Warning: schemas not found.")
+        print("Schema files are available in engine v0.6.0 and later.")
         print("Skipping schema setup for editor integration.")
         return None
 

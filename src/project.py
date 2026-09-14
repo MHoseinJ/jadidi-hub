@@ -1,137 +1,20 @@
-import json
 import shutil
 import stat
-import struct
 import subprocess
 from pathlib import Path
 
 from src import engine
-from src import paths
 from src import osinfo
-
-PROJECT_DIRS = [
-    "Fonts",
-    "Scenes",
-    "Scripts",
-    "Shaders",
-]
-
-SPRITE_VERTEX_SHADER = """#version 330 core
-layout (location = 0) in vec2 aPos;
-layout (location = 1) in vec2 aTexCoord;
-
-out vec2 TexCoord;
-
-uniform mat4 model;
-uniform mat4 projection;
-uniform vec2 uvOffset;
-uniform vec2 uvScale;
-
-void main() {
-    gl_Position = projection * model * vec4(aPos, 0.0, 1.0);
-    TexCoord = aTexCoord * uvScale + uvOffset;
-}
-"""
-
-SPRITE_FRAGMENT_SHADER = """#version 330 core
-in vec2 TexCoord;
-out vec4 FragColor;
-
-uniform sampler2D image;
-uniform vec4 spriteColor;
-uniform bool useTexture;
-
-void main() {
-    if (useTexture) {
-        FragColor = spriteColor * texture(image, TexCoord);
-    } else {
-        FragColor = spriteColor;
-    }
-}
-"""
-
-IDE_DIR_CANDIDATES = [
-    "ide autocompletion",
-    "ide_autocompletion",
-    "ide-autocompletion",
-    "IDE Autocompletion",
-]
-
-SYSTEM_FONT_CANDIDATES = [
-    "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
-    "/usr/share/fonts/TTF/DejaVuSans.ttf",
-    "/usr/share/fonts/dejavu/DejaVuSans.ttf",
-    "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",
-    "/usr/share/fonts/liberation/LiberationSans-Regular.ttf",
-]
+from src import paths
 
 
-def assets_dir():
-    return paths.BASE_DIR / "assets"
+def find_template_dir():
+    template_dir = paths.ENGINE_SOURCE_DIR / "base_template"
 
-
-def local_icon():
-    return assets_dir() / "icon.bmp"
-
-
-def local_font():
-    return assets_dir() / "font.ttf"
-
-
-def normalize_name(name):
-    return "".join(ch for ch in name.lower() if ch.isalnum())
-
-
-def find_ide_autocompletion_dir():
-    source = paths.ENGINE_SOURCE_DIR
-
-    if not source.exists():
-        return None
-
-    for name in IDE_DIR_CANDIDATES:
-        candidate = source / name
-
-        if candidate.is_dir():
-            return candidate
-
-    wanted = {normalize_name(name) for name in IDE_DIR_CANDIDATES}
-
-    for child in source.iterdir():
-        if child.is_dir() and normalize_name(child.name) in wanted:
-            return child
-
-    for child in source.iterdir():
-        if child.is_dir():
-            normalized = normalize_name(child.name)
-
-            if "ide" in normalized and "autocompletion" in normalized:
-                return child
+    if template_dir.is_dir():
+        return template_dir
 
     return None
-
-
-def make_bmp():
-    file_size = 58
-    offset = 54
-
-    header = struct.pack("<2sIHHI", b"BM", file_size, 0, 0, offset)
-    info = struct.pack(
-        "<IiiHHIIiiII",
-        40,
-        1,
-        1,
-        1,
-        24,
-        0,
-        4,
-        2835,
-        2835,
-        0,
-        0,
-    )
-    pixel = b"\x00\x00\xff\x00"
-
-    return header + info + pixel
 
 
 def find_binary(version=None):
@@ -169,148 +52,8 @@ def find_binary(version=None):
                 return binary
 
     raise RuntimeError(
-        "Engine binary not found. Run: python main.py engine-build"
+        "Engine binary not found. Run: jadidi-hub engine-build"
     )
-
-
-def write_config(project_root):
-    config_path = project_root / "config.json"
-
-    if config_path.exists():
-        return
-
-    config = {
-        "window": {
-            "fullscreen": False,
-            "height": 720,
-            "icon": "icon.bmp",
-            "renderer": "opengl",
-            "title": project_root.name,
-            "width": 1280,
-        }
-    }
-
-    config_path.write_text(json.dumps(config, indent=4) + "\n")
-
-
-def write_home_scene(project_root):
-    home_path = project_root / "Scenes" / "home.json"
-
-    if home_path.exists():
-        return
-
-    home_path.write_text('{ "objects": [] }\n')
-
-
-def write_shaders(project_root):
-    shaders_dir = project_root / "Shaders"
-
-    vert_path = shaders_dir / "sprite.vert"
-    frag_path = shaders_dir / "sprite.frag"
-
-    if not vert_path.exists():
-        vert_path.write_text(SPRITE_VERTEX_SHADER.lstrip())
-
-    if not frag_path.exists():
-        frag_path.write_text(SPRITE_FRAGMENT_SHADER.lstrip())
-
-
-def copy_icon(project_root):
-    icon_path = project_root / "icon.bmp"
-
-    if icon_path.exists():
-        return
-
-    if local_icon().exists():
-        shutil.copy2(local_icon(), icon_path)
-        return
-
-    icon_path.write_bytes(make_bmp())
-
-
-def copy_font(project_root):
-    font_path = project_root / "Fonts" / "font.ttf"
-
-    if font_path.exists():
-        return
-
-    if local_font().exists():
-        shutil.copy2(local_font(), font_path)
-        return
-
-    for candidate in SYSTEM_FONT_CANDIDATES:
-        candidate_path = Path(candidate)
-
-        if candidate_path.exists():
-            shutil.copy2(candidate_path, font_path)
-            return
-
-    font_path.write_bytes(b"")
-    print(f"Warning: created empty {font_path}. Replace it with a real TTF font.")
-
-
-def copy_ide_autocompletion(project_root, ide_dir):
-    target = project_root / ide_dir.name
-
-    if target.exists():
-        if target.is_dir():
-            shutil.rmtree(target)
-        else:
-            target.unlink()
-
-    shutil.copytree(ide_dir, target)
-
-    return target
-
-
-def write_gitignore(project_root):
-    gitignore_path = project_root / ".gitignore"
-
-    if gitignore_path.exists():
-        return
-
-    bin_name = osinfo.binary_name()
-    gitignore_path.write_text(
-        f"{bin_name}\n"
-        f"# Editor settings contain absolute paths; regenerate with:\n"
-        f"#   jadidi-hub setup-editor <project-path>\n"
-        f".vscode/settings.json\n"
-        f".zed/settings.json\n"
-    )
-
-
-def write_setup_script(project_root):
-    setup_path = project_root / "setup.sh"
-
-    if setup_path.exists():
-        return
-
-    content = """#!/usr/bin/env bash
-# Run this once after cloning the project to set up editor integration.
-#
-# Prerequisites:
-#   - jadidi-hub is installed and in PATH
-#   - Engine is already synced/built (or run: jadidi-hub engine-sync && jadidi-hub engine-build)
-set -e
-
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-
-echo "Setting up editor integration for: $SCRIPT_DIR"
-
-if command -v jadidi-hub >/dev/null 2>&1; then
-    jadidi-hub setup-editor "$SCRIPT_DIR"
-else
-    echo "Error: jadidi-hub not found in PATH." >&2
-    echo "Install it from: https://github.com/MHoseinJ/jadidi-hub" >&2
-    exit 1
-fi
-
-echo ""
-echo "Setup complete. You can now open the project in VSCode or Zed."
-"""
-
-    setup_path.write_text(content)
-    setup_path.chmod(0o755)
 
 
 def run_git_init(project_root):
@@ -331,31 +74,25 @@ def create_project(path, version=None, git_init=False, force=False):
         raise RuntimeError(f"{project_root} is a file")
 
     if project_root.exists() and any(project_root.iterdir()) and not force:
-        raise RuntimeError(f"{project_root} is not empty (use --force to override)")
-
-    ide_dir = find_ide_autocompletion_dir()
-
-    if not ide_dir:
         raise RuntimeError(
-            "ide autocompletion directory not found in engine source"
+            f"{project_root} is not empty (use --force to override)"
         )
 
-    project_root.mkdir(parents=True, exist_ok=True)
+    template_dir = find_template_dir()
 
-    for directory in PROJECT_DIRS:
-        (project_root / directory).mkdir(parents=True, exist_ok=True)
+    if not template_dir:
+        raise RuntimeError(
+            "base_template not found in engine source.\n"
+            "This feature requires engine v0.6.0-beta.2 or later.\n"
+            f"Current engine source: {paths.ENGINE_SOURCE_DIR}\n"
+            "Try: jadidi-hub engine-sync (to get the latest tag)\n"
+            "Or: jadidi-hub engine-checkout HEAD (to use the latest commit)"
+        )
 
-    write_config(project_root)
-    write_home_scene(project_root)
-    write_shaders(project_root)
-    copy_icon(project_root)
-    copy_font(project_root)
-
-    ide_target = copy_ide_autocompletion(project_root, ide_dir)
+    shutil.copytree(template_dir, project_root, dirs_exist_ok=True)
 
     binary_src = find_binary(version)
     binary_dst = project_root / osinfo.binary_name()
-
     shutil.copy2(binary_src, binary_dst)
     binary_dst.chmod(
         binary_dst.stat().st_mode
@@ -364,16 +101,16 @@ def create_project(path, version=None, git_init=False, force=False):
         | stat.S_IXOTH
     )
 
+    setup_script = project_root / "setup.sh"
+    if setup_script.exists():
+        setup_script.chmod(0o755)
+
     print(f"Project created: {project_root}")
     print(f"Engine binary: {binary_dst}")
     print(f"Binary source: {binary_src}")
-    print(f"IDE autocompletion: {ide_target}")
 
     if git_init:
-        write_gitignore(project_root)
         run_git_init(project_root)
         print(f"Git repository initialized: {project_root / '.git'}")
-
-    write_setup_script(project_root)
 
     return 0
