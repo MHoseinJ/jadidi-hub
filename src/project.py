@@ -1,12 +1,25 @@
+import json
 import shutil
 import stat
 import subprocess
+import datetime
 from pathlib import Path
 
 from src import engine
 from src import osinfo
 from src import paths
 
+def write_project_meta(project_root, version):
+    meta_path = project_root / ".jadidi.json"
+
+    meta = {
+        "engine_version": version,
+        "created_by": "jadidi-hub",
+        "created_at": datetime.datetime.now().isoformat(timespec="seconds"),
+        "schema_version": 1,
+    }
+
+    meta_path.write_text(json.dumps(meta, indent=4) + "\n")
 
 def find_template_dir():
     template_dir = paths.ENGINE_SOURCE_DIR / "base_template"
@@ -100,6 +113,11 @@ def create_project(path, version=None, git_init=False, force=False):
         | stat.S_IXGRP
         | stat.S_IXOTH
     )
+
+    resolved_version = version or engine.get_version_name()
+    write_project_meta(project_root, resolved_version)
+
+    print(f"Project created: {project_root}")
 
     setup_script = project_root / "setup.sh"
     if setup_script.exists():
